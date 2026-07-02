@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "dv-news-client-side-solution",
+    "id": "bd1704c5-2348-4de5-9bb1-7aa0b905910a",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.22.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "dv-news description"
+      },
+      "longDescription": {
+        "default": "dv-news description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "dv-news Feature",
+        "description": "The feature that activates elements of the dv-news solution.",
+        "id": "9b6cf0bf-cf5a-4d3b-925c-2887ed9bdee0",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/dv-news.sppkg"
+  }
+}
