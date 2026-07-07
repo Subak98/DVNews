@@ -227,7 +227,9 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
   };
 
   const handleRedirect = () => {
-    window.location.href = redirecturl;
+    window.open(redirecturl, "_blank", "noopener,noreferrer");
+    setCreatedItemSuccess(false);
+    setIsAddDialogOpen(false);
   };
 
   const openAddDialog = () => {
@@ -378,6 +380,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                       }}
                       placeholder="Enter title"
                       required
+                      className="NewsTitle"
                       disabled={isCreatingItem}
                       description={newTitleWarning}
                       errorMessage={newTitleError}
@@ -399,6 +402,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                       placeholder="Select Departments"
                       multiSelect
                       disabled={isCreatingItem}
+                      className="deptdd"
                       selectedKeys={selectedDepartments}
                       onChange={handleDepartmentChange}
                       options={deptOptions.map((dept) => ({

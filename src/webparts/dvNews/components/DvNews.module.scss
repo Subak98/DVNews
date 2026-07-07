@@ -33,7 +33,7 @@
 }
 .contentBox {
   border-radius: 0 0 10px 10px;
-  border: 1px solid #edf0f2;
+  // border: 1px solid #edf0f2;
 }
 .boxWebPartTitle {
   font-size: 20px;
@@ -48,7 +48,7 @@
   gap: 10px;
   position: relative;
   z-index: 20;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   padding: 5px;
 }
 .modalOverlay {
@@ -191,7 +191,7 @@
 .createBtn {
   background: linear-gradient(314deg, #63c4f3 0%, #645aff 55%);
   color: #ffffff;
-  padding: 12px 22px;
+  padding: 7px 20px;
 }
 .createBtn:disabled {
   background-color: #d0d7e0;
@@ -359,7 +359,7 @@
   font-weight: 700;
   color: #4b5563;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .detailValue {
@@ -389,6 +389,8 @@
   transition: all 0.3s ease-in-out;
   border: 1px solid #dbe2e7;
   font-size: 16px;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   img {
     // height: 160px;
@@ -477,6 +479,26 @@
 :global {
   .swiper-button-next,
   .swiper-button-prev {
-    height: 35px !important;
+    height: 27px !important;
+  }
+  // .featuredNews .swiper-slide {
+  //   margin-left: 5px;
+  // }
+  .NewsTitle .ms-TextField-fieldGroup {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+  }
+  .deptdd .ms-Dropdown-title {
+    border-color: #d1d5db;
+    border-radius: 8px;
+  }
+
+  .swiper-horizontal {
+    &.swiper-rtl .swiper-button-next,
+    &.swiper-rtl ~ .swiper-button-next,
+    & ~ .swiper-button-prev,
+    .swiper-button-prev {
+      left: var(--swiper-navigation-sides-offset, -11px) !important;
+    }
   }
 }
