@@ -3,7 +3,7 @@
   "solution": {
     "name": "dv-news-client-side-solution",
     "id": "bd1704c5-2348-4de5-9bb1-7aa0b905910a",
-    "version": "1.0.0.0",
+    "version": "1.0.0.1",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,

@@ -19,7 +19,7 @@
     "SharePointFullPage"
   ],
   "supportsThemeVariants": true,
-  "supportsFullBleed": true,
+  "supportsFullBleed": false,
 
   "preconfiguredEntries": [
     {
