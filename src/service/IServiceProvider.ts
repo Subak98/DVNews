@@ -18,4 +18,5 @@ export interface IServiceProvider {
     sites: IPropertyFieldSite[],
     sitetitle: string,
   ): Promise<any>;
+  ensureDepartmentFieldExists(sites: IPropertyFieldSite[]): Promise<boolean>;
 }

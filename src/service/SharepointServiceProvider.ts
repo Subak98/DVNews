@@ -13,6 +13,7 @@ import { SPHttpClient } from "@microsoft/sp-http";
 import moment from "moment";
 import { PromotedState } from "@pnp/sp/clientside-pages";
 import { IPropertyFieldSite } from "@pnp/spfx-property-controls";
+import { ChoiceFieldFormatType } from "@pnp/sp/fields";
 
 export default class SharepointServiceProvider implements IServiceProvider {
   _webPartContext: BaseWebPartContext;
@@ -38,6 +39,35 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
     const choices = field.Choices || [];
     return [...choices];
+  }
+
+  public async ensureDepartmentFieldExists(
+    sites: IPropertyFieldSite[],
+  ): Promise<boolean> {
+    try {
+      const siteUrl = `${sites[0].url}`;
+      const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
+      const list = subweb.web.lists.getByTitle("Site Pages");
+
+      // Try to get the Department field
+      try {
+        const field = await list.fields.getByTitle("Department")();
+        // Field exists
+        return true;
+      } catch (error: any) {
+        console.log("not exist");
+
+        await list.fields.addMultiChoice("Department", {
+          Choices: ["All"],
+          FillInChoice: false,
+          Group: "My Group",
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error("Error ensuring Department field exists:", error);
+      return false;
+    }
   }
   // public async getNewsPost(
   //   sites: IPropertyFieldSite[],
@@ -211,7 +241,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
         "*",
         "Title",
         "Department",
-        "ShowNewsinHome",
+
         "Modified",
         "BannerImageUrl",
         "Description",
@@ -269,7 +299,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
         Created: moment(item.Created).format(),
         Author: item.Author,
         Department: item.Department || "",
-        ShowNewsinHome: item.ShowNewsinHome,
+        // ShowNewsinHome: item.ShowNewsinHome,
         AuthorByLine: item.Author ? item.Author : "",
         Image:
           customPhoto &&
@@ -301,7 +331,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
         "*",
         "Title",
         "Department",
-        "ShowNewsinHome",
+
         "Modified",
         "BannerImageUrl",
         "Description",
@@ -336,7 +366,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
         Created: moment(item.Created).format(),
         Author: item.Author,
         Department: item.Department || "",
-        ShowNewsinHome: item.ShowNewsinHome,
+        // ShowNewsinHome: item.ShowNewsinHome,
         AuthorByLine: item.Author ? item.Author : "",
         Image:
           customPhoto &&

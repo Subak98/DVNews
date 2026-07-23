@@ -10,7 +10,7 @@ export interface IFeaturedNewsList {
   Image: string;
   Link: string;
   Department: string;
-  ShowNewsinHome: boolean;
+  // ShowNewsinHome: boolean;
 
   Author: IAuthor;
   AuthorByLine: IAuthor;

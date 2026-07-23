@@ -107,17 +107,24 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
     }
   }, []);
   const fetchDepartmentsOption = async () => {
-    const news = await props.provider
-      .getDepartmentFieldOptions(props.searchSites)
-      .then((res) => {
-        setDeptOptions(
-          res.map((dept: string) => ({
-            key: dept,
-            text: dept,
-            value: dept,
-          })),
-        );
-      });
+    try {
+      // Ensure the Department field exists first
+      await props.provider.ensureDepartmentFieldExists(props.searchSites);
+
+      const news = await props.provider
+        .getDepartmentFieldOptions(props.searchSites)
+        .then((res) => {
+          setDeptOptions(
+            res.map((dept: string) => ({
+              key: dept,
+              text: dept,
+              value: dept,
+            })),
+          );
+        });
+    } catch (error) {
+      console.error("Error in fetchDepartmentsOption:", error);
+    }
   };
   React.useEffect(() => {
     fetchDepartmentsOption().catch((error) => {
