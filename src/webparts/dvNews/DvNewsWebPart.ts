@@ -4,6 +4,7 @@ import { Version } from "@microsoft/sp-core-library";
 import {
   type IPropertyPaneConfiguration,
   PropertyPaneDropdown,
+  PropertyPaneLink,
   PropertyPaneTextField,
 } from "@microsoft/sp-property-pane";
 import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
@@ -139,7 +140,19 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
   protected get dataVersion(): Version {
     return Version.parse("1.0");
   }
-
+  public renderLink(searchSites: any[]): any[] {
+    if (this.properties.searchSites.length > 0) {
+      return [
+        PropertyPaneLink("", {
+          target: "_blank",
+          href: `${this.properties.searchSites[0].url}/SitePages/Forms/ByAuthor.aspx`,
+          text: "Edit News Articles",
+        }),
+      ];
+    } else {
+      return [];
+    }
+  }
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {
       pages: [
@@ -153,6 +166,7 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
               groupFields: [
                 PropertyPaneTextField("title", {
                   label: "Web Part Title",
+                  value: "News",
                 }),
                 PropertyFieldSitePicker("searchSites", {
                   label: "Search sites",
@@ -164,6 +178,7 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
                   properties: this.properties.searchSites,
                   key: "sitesFieldId",
                 }),
+                ...this.renderLink(this.properties.searchSites),
                 PropertyFieldPeoplePicker("adminUsers", {
                   label: "Target audience",
                   initialData: this.properties.adminUsers,
