@@ -44,34 +44,36 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
     const firstBatchSize = 5;
     setIsLoadingNews(true);
     try {
-      const firstBatch = await props.provider.getNewsPost(
-        props.searchSites,
-        firstBatchSize,
-        0,
-      );
-      console.log("First batch:", firstBatch);
-      setNewsItems(firstBatch);
-
-      setIsLoadingMoreNews(true);
-      try {
-        const remainingNews = await props.provider.getNewsPost(
+      if (props.searchSites !== undefined && props.searchSites.length > 0) {
+        const firstBatch = await props.provider.getNewsPost(
           props.searchSites,
-          200,
           firstBatchSize,
+          0,
         );
-        console.log("Remaining batch:", remainingNews);
-        if (remainingNews.length > 0) {
-          setNewsItems((prev) => [
-            ...prev,
-            ...remainingNews.filter(
-              (item) => !prev.some((existing) => existing.Link === item.Link),
-            ),
-          ]);
+        console.log("First batch:", firstBatch);
+        setNewsItems(firstBatch);
+
+        setIsLoadingMoreNews(true);
+        try {
+          const remainingNews = await props.provider.getNewsPost(
+            props.searchSites,
+            200,
+            firstBatchSize,
+          );
+          console.log("Remaining batch:", remainingNews);
+          if (remainingNews.length > 0) {
+            setNewsItems((prev) => [
+              ...prev,
+              ...remainingNews.filter(
+                (item) => !prev.some((existing) => existing.Link === item.Link),
+              ),
+            ]);
+          }
+        } catch (error) {
+          console.error("Error fetching remaining news posts:", error);
+        } finally {
+          setIsLoadingMoreNews(false);
         }
-      } catch (error) {
-        console.error("Error fetching remaining news posts:", error);
-      } finally {
-        setIsLoadingMoreNews(false);
       }
     } catch (error) {
       console.error("Error fetching news posts:", error);
@@ -107,23 +109,25 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
     }
   }, []);
   const fetchDepartmentsOption = async () => {
-    try {
-      // Ensure the Department field exists first
-      await props.provider.ensureDepartmentFieldExists(props.searchSites);
+    if (props.searchSites !== undefined && props.searchSites.length > 0) {
+      try {
+        // Ensure the Department field exists first
+        await props.provider.ensureDepartmentFieldExists(props.searchSites);
 
-      const news = await props.provider
-        .getDepartmentFieldOptions(props.searchSites)
-        .then((res) => {
-          setDeptOptions(
-            res.map((dept: string) => ({
-              key: dept,
-              text: dept,
-              value: dept,
-            })),
-          );
-        });
-    } catch (error) {
-      console.error("Error in fetchDepartmentsOption:", error);
+        const news = await props.provider
+          .getDepartmentFieldOptions(props.searchSites)
+          .then((res) => {
+            setDeptOptions(
+              res.map((dept: string) => ({
+                key: dept,
+                text: dept,
+                value: dept,
+              })),
+            );
+          });
+      } catch (error) {
+        console.error("Error in fetchDepartmentsOption:", error);
+      }
     }
   };
   React.useEffect(() => {
@@ -191,13 +195,13 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
       return false;
     }
 
-    const invalidTitlePattern = /[#^*|"'<>/:?\\]/;
-    if (invalidTitlePattern.test(titleValue)) {
-      setNewTitleError(
-        "Title cannot contain special characters like #^*|\"':<>/?.",
-      );
-      return false;
-    }
+    // const invalidTitlePattern = /[#^*|"'<>/:?\\]/;
+    // if (invalidTitlePattern.test(titleValue)) {
+    //   setNewTitleError(
+    //     "Title cannot contain special characters like #^*|\"':<>/?.",
+    //   );
+    //   return false;
+    // }
 
     setNewTitleError("");
     return true;
@@ -389,7 +393,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                       required
                       className="NewsTitle"
                       disabled={isCreatingItem}
-                      description={newTitleWarning}
+                      // description={newTitleWarning}
                       errorMessage={newTitleError}
                     />
                   </div>

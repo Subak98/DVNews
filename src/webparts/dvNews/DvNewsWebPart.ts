@@ -3,7 +3,10 @@ import * as ReactDom from "react-dom";
 import { Version } from "@microsoft/sp-core-library";
 import {
   type IPropertyPaneConfiguration,
+  IPropertyPaneCustomFieldProps,
+  IPropertyPaneField,
   PropertyPaneDropdown,
+  PropertyPaneFieldType,
   PropertyPaneLink,
   PropertyPaneTextField,
 } from "@microsoft/sp-property-pane";
@@ -141,7 +144,10 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
     return Version.parse("1.0");
   }
   public renderLink(searchSites: any[]): any[] {
-    if (this.properties.searchSites.length > 0) {
+    if (
+      this.properties.searchSites !== undefined &&
+      this.properties.searchSites.length > 0
+    ) {
       return [
         PropertyPaneLink("", {
           target: "_blank",
@@ -152,6 +158,110 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
     } else {
       return [];
     }
+  }
+  private getSitePickerLabel(): IPropertyPaneField<IPropertyPaneCustomFieldProps> {
+    return {
+      type: PropertyPaneFieldType.Custom,
+      targetProperty: "searchSites",
+
+      properties: {
+        key: "sitePickerInfo",
+
+        onRender: (elem: HTMLElement): void => {
+          elem.innerHTML = `
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+          ">
+            <span style="
+              font-size: 14px;
+              font-weight: 600;
+              color: #323130;
+            ">
+              Search sites
+            </span>
+
+            <span
+              title="Select the SharePoint sites where you want to upload news articles."
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background-color: #605e5c;
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 600;
+                
+              "
+            >
+              i
+            </span>
+          </div>
+        `;
+        },
+
+        onDispose: (elem: HTMLElement): void => {
+          elem.innerHTML = "";
+        },
+      },
+    };
+  }
+  private getLayoutLabel(): IPropertyPaneField<IPropertyPaneCustomFieldProps> {
+    return {
+      type: PropertyPaneFieldType.Custom,
+      targetProperty: "searchSites",
+
+      properties: {
+        key: "sitePickerInfo",
+
+        onRender: (elem: HTMLElement): void => {
+          elem.innerHTML = `
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+          ">
+            <span style="
+              font-size: 14px;
+              font-weight: 600;
+              color: #323130;
+            ">
+              Select Layout
+            </span>
+
+            <span
+              title="Select the layout for the News web part. *Home* displays news tagged as “All”, while *Department* displays news based on the current department site."
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background-color: #605e5c;
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 600;
+                
+              "
+            >
+              i
+            </span>
+          </div>
+        `;
+        },
+
+        onDispose: (elem: HTMLElement): void => {
+          elem.innerHTML = "";
+        },
+      },
+    };
   }
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {
@@ -168,8 +278,9 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
                   label: "Web Part Title",
                   value: "News",
                 }),
+                this.getSitePickerLabel(),
                 PropertyFieldSitePicker("searchSites", {
-                  label: "Search sites",
+                  label: "",
                   initialSites: this.properties.searchSites,
                   context: this.context,
                   deferredValidationTime: 500,
@@ -196,16 +307,17 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
                   deferredValidationTime: 0,
                   key: "peopleFieldId",
                 }),
+                this.getLayoutLabel(),
                 PropertyPaneDropdown("layout", {
-                  label: "Select Layout",
+                  label: "",
                   options: [
                     { key: "Home", text: "Home" },
                     { key: "Department", text: "Department" },
                   ],
                 }),
-                PropertyPaneTextField("sitetitle", {
-                  label: "Site Title",
-                }),
+                // PropertyPaneTextField("sitetitle", {
+                //   label: "Site Title",
+                // }),
               ],
             },
           ],

@@ -45,7 +45,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
     sites: IPropertyFieldSite[],
   ): Promise<boolean> {
     try {
-      const siteUrl = `${sites[0].url}`;
+      const siteUrl = `${sites?.[0].url}`;
       const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
       const list = subweb.web.lists.getByTitle("Site Pages");
 
@@ -62,6 +62,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
           FillInChoice: false,
           Group: "My Group",
         });
+        await list.defaultView.fields.add("Department");
         return true;
       }
     } catch (error) {
@@ -399,18 +400,25 @@ export default class SharepointServiceProvider implements IServiceProvider {
       PromotedState.PromoteOnPublish,
     );
     const graph = graphfi().using(graphSPFx(this._webPartContext));
-    const groups = await graph.groups();
+    const groups = await graph.groups.top(999).select("displayName", "id")();
 
     // you must publish the new page, after which the page will immediately be promoted to a news article
     // await page3.save();
-    const item = await subweb.web
-      .getFileByServerRelativePath(
-        `/sites/${sitetitle}/SitePages/${data.title.replace(/\s/g, "-")}.aspx`,
-      )
-      .getItem();
-    const gitem = await item.select("Id", "Title")();
+    const items: any[] = await subweb.web.lists
+      .getByTitle("Site Pages")
+      .items.orderBy("ID", false)
+      .select("Id", "Title", "FileRef")
+      .top(1)();
+    console.log(items);
 
-    const updateitem = await list.items.getById(gitem.Id).update({
+    // const item = await subweb.web
+    //   .getFileByServerRelativePath(
+    //     `/sites/${sitetitle}/SitePages/${data.title.replace(/\s/g, "-")}.aspx`,
+    //   )
+    //   .getItem();
+    // const gitem = await item.select("Id", "Title")();
+
+    const updateitem = await list.items.getById(items[0].Id).update({
       Department: data.departments,
       // ShowNewsinHome: data.showInHome,
     });
@@ -421,7 +429,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
     ) {
       try {
         const context = await this._webPartContext.spHttpClient.post(
-          `${siteUrl}/_api/web/lists/getByTitle('Site Pages')/Items/getById(${gitem.Id})/breakroleinheritance(copyRoleAssignments=false,clearSubscopes=true)`,
+          `${siteUrl}/_api/web/lists/getByTitle('Site Pages')/Items/getById(${items[0].Id})/breakroleinheritance(copyRoleAssignments=false,clearSubscopes=true)`,
           SPHttpClient.configurations.v1,
           {
             headers: {
@@ -447,6 +455,10 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
       // we can use this 'list' variable to run more queries on the list:
       const sitePagesListID = await sitePagelist.select("Id")();
+      console.log(groups);
+
+      console.log(data.departments);
+
       for (const departmentName of data.departments) {
         const groupID: any = groups.find(
           (g) => g.displayName === departmentName,
@@ -475,7 +487,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
           useSimplifiedRoles: true,
         };
         const shareResponse = await this._webPartContext.spHttpClient.post(
-          `${siteUrl}/_api/web/Lists(@a1)/GetItemById(@a2)/ShareObject?@a1='${sitePagesListID.Id}'&@a2='${gitem.Id}'`,
+          `${siteUrl}/_api/web/Lists(@a1)/GetItemById(@a2)/ShareObject?@a1='${sitePagesListID.Id}'&@a2='${items[0].Id}'`,
           SPHttpClient.configurations.v1,
           {
             headers: {
@@ -498,6 +510,8 @@ export default class SharepointServiceProvider implements IServiceProvider {
       }
     }
 
-    return `/sites/${sitetitle}/SitePages/${data.title.replace(/\s/g, "-")}.aspx?Mode=Edit`;
+    return `${items[0].FileRef}?Mode=Edit`;
+
+    // return `/sites/${sitetitle}/SitePages/${sanitizedTitle}.aspx?Mode=Edit`;
   }
 }
