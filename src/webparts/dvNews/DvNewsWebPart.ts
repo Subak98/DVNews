@@ -236,7 +236,59 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
             </span>
 
             <span
-              title="Select the layout for the News web part. *Home* displays news tagged as “All”, while *Department* displays news based on the current department site."
+              title="Select *Home* to display news created with “All” selected, making it available across all departments or sites. Select *Department* to display news created specifically for the current department or site."
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background-color: #605e5c;
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 600;
+                
+              "
+            >
+              i
+            </span>
+          </div>
+        `;
+        },
+
+        onDispose: (elem: HTMLElement): void => {
+          elem.innerHTML = "";
+        },
+      },
+    };
+  }
+  private getTargetAudienceInfo(): IPropertyPaneField<IPropertyPaneCustomFieldProps> {
+    return {
+      type: PropertyPaneFieldType.Custom,
+      targetProperty: "searchSites",
+
+      properties: {
+        key: "sitePickerInfo",
+
+        onRender: (elem: HTMLElement): void => {
+          elem.innerHTML = `
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+          ">
+            <span style="
+              font-size: 14px;
+              font-weight: 600;
+              color: #323130;
+            ">
+              Target Audience
+            </span>
+
+            <span
+              title="Select the users who are authorized to add news. The Add News button will be available only to the selected users."
               style="
                 display: inline-flex;
                 align-items: center;
@@ -290,8 +342,9 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
                   key: "sitesFieldId",
                 }),
                 ...this.renderLink(this.properties.searchSites),
+                this.getTargetAudienceInfo(),
                 PropertyFieldPeoplePicker("adminUsers", {
-                  label: "Target audience",
+                  label: "",
                   initialData: this.properties.adminUsers,
                   allowDuplicate: false,
                   principalType: [

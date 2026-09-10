@@ -13,7 +13,12 @@ import { SPHttpClient } from "@microsoft/sp-http";
 import moment from "moment";
 import { PromotedState } from "@pnp/sp/clientside-pages";
 import { IPropertyFieldSite } from "@pnp/spfx-property-controls";
-import { ChoiceFieldFormatType } from "@pnp/sp/fields";
+import {
+  CalendarType,
+  ChoiceFieldFormatType,
+  DateTimeFieldFormatType,
+  DateTimeFieldFriendlyFormatType,
+} from "@pnp/sp/fields";
 
 export default class SharepointServiceProvider implements IServiceProvider {
   _webPartContext: BaseWebPartContext;
@@ -70,6 +75,44 @@ export default class SharepointServiceProvider implements IServiceProvider {
       return false;
     }
   }
+  public async ensureExpiryDateExists(
+    sites: IPropertyFieldSite[],
+  ): Promise<boolean> {
+    try {
+      const siteUrl = `${sites?.[0].url}`;
+      const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
+      const list = subweb.web.lists.getByTitle("Site Pages");
+
+      // Try to get the ExpiryDate field
+      try {
+        const field = await list.fields.getByTitle("ExpiryDate")();
+        // Field exists
+        return true;
+      } catch (error: any) {
+        console.log("not exist");
+
+        await list.fields.addDateTime("ExpiryDate", {
+          DisplayFormat: DateTimeFieldFormatType.DateOnly,
+          DateTimeCalendarType: CalendarType.Gregorian,
+          FriendlyDisplayFormat: DateTimeFieldFriendlyFormatType.Disabled,
+          Group: "My Group",
+        });
+        await list.fields.addChoice(`Status`, {
+          Choices: ["Active", "Expired"],
+          EditFormat: ChoiceFieldFormatType.Dropdown,
+          FillInChoice: false,
+          Group: "My Group",
+        });
+        await list.defaultView.fields.add("ExpiryDate");
+        await list.defaultView.fields.add("Status");
+        return true;
+      }
+    } catch (error) {
+      console.error("Error ensuring ExpiryDate field exists:", error);
+      return false;
+    }
+  }
+
   // public async getNewsPost(
   //   sites: IPropertyFieldSite[],
   //   top: number = 200,
@@ -233,7 +276,8 @@ export default class SharepointServiceProvider implements IServiceProvider {
     const siteUrl = `${sites[0].url}`;
     const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
 
-    const filterNews = "PromotedState eq 2";
+    const today = moment().format("YYYY-MM-DD");
+    const filterNews = `PromotedState eq 2 and (ExpiryDate ge datetime'${today}T23:59:59Z' or ExpiryDate eq null)`;
     const list = subweb.web.lists.getByTitle("Site Pages");
     const siteTitle = await this.sp.web.select("Title")();
     const getitems = await list.items
@@ -323,8 +367,8 @@ export default class SharepointServiceProvider implements IServiceProvider {
   ): Promise<IFeaturedNewsList[]> {
     const siteUrl = `${sites[0].url}`;
     const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
-
-    const filterNews = "PromotedState eq 2 and (Department eq 'All')";
+    const today = moment().format("YYYY-MM-DD");
+    const filterNews = `PromotedState eq 2 and (Department eq 'All') and (ExpiryDate ge datetime'${today}T23:59:59Z' or ExpiryDate eq null)`;
     const list = subweb.web.lists.getByTitle("Site Pages");
     const getitems = await list.items
       .filter(filterNews)
@@ -420,6 +464,8 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
     const updateitem = await list.items.getById(items[0].Id).update({
       Department: data.departments,
+      ExpiryDate: data.expiryDate,
+      Status: "Active",
       // ShowNewsinHome: data.showInHome,
     });
     console.log(data.departments);

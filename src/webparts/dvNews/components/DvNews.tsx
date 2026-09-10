@@ -10,7 +10,13 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Dropdown } from "@fluentui/react/lib/Dropdown";
-import { Checkbox, Spinner, SpinnerSize, TextField } from "@fluentui/react";
+import {
+  Checkbox,
+  DatePicker,
+  Spinner,
+  SpinnerSize,
+  TextField,
+} from "@fluentui/react";
 import { graphfi, SPFx as graphSPFx } from "@pnp/graph";
 import "@pnp/graph/groups";
 import "@pnp/graph/members";
@@ -24,6 +30,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
   const [isLoadingMoreNews, setIsLoadingMoreNews] = React.useState(false);
   const [createdItemSuccess, setCreatedItemSuccess] = React.useState(false);
   const [newTitle, setNewTitle] = React.useState("");
+  const [expiryDate, setExpiryDate] = React.useState<string>("");
   const [selectedDepartments, setSelectedDepartments] = React.useState<
     string[]
   >([]);
@@ -113,7 +120,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
       try {
         // Ensure the Department field exists first
         await props.provider.ensureDepartmentFieldExists(props.searchSites);
-
+        await props.provider.ensureExpiryDateExists(props.searchSites);
         const news = await props.provider
           .getDepartmentFieldOptions(props.searchSites)
           .then((res) => {
@@ -216,6 +223,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
     const createData = {
       title: titleValue,
       departments: selectedDepartments,
+      expiryDate,
       showInHome,
     };
 
@@ -245,6 +253,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
 
   const openAddDialog = () => {
     setNewTitle("");
+    setExpiryDate("");
     setSelectedDepartments([]);
     setSelectedSiteTypes([]);
     setShowInHome(false);
@@ -399,6 +408,38 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                   </div>
 
                   <div className={styles.formRow}>
+                    <div>
+                      <label className={styles.inputLabel}>Expiry Date</label>
+                      <span
+                        style={{
+                          color: "#a4262c",
+                          paddingRight: "8px",
+                          marginLeft: "3px",
+                        }}
+                      >
+                        *
+                      </span>
+                    </div>
+                    <DatePicker
+                      // label="Expiry Date"
+                      value={
+                        expiryDate
+                          ? new Date(`${expiryDate}T00:00:00`)
+                          : undefined
+                      }
+                      onSelectDate={(date) =>
+                        setExpiryDate(
+                          date ? date.toISOString().slice(0, 10) : "",
+                        )
+                      }
+                      className="NewsTitle"
+                      placeholder="Select news expiry date"
+                      // isRequired
+                      disabled={isCreatingItem}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
                     <div className={styles.inputLabelRow}>
                       <label className={styles.inputLabel}>Departments</label>
                       <button
@@ -459,7 +500,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                     type="button"
                     className={styles.createBtn}
                     onClick={handleCreateItem}
-                    disabled={isCreatingItem || !newTitle.trim()}
+                    disabled={isCreatingItem || !newTitle.trim() || !expiryDate}
                   >
                     {isCreatingItem ? "Creating..." : "Create"}
                   </button>
@@ -606,12 +647,16 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                         <SwiperSlide key={index}>
                           <div className={styles.filmstripView_Container}>
                             <div>
-                              <img
-                                src={image}
-                                height={215}
-                                alt={item.Title}
-                                width="100%"
-                              />
+                              <div style={{ height: "150px" }}>
+                                {" "}
+                                <img
+                                  src={image}
+                                  height={215}
+                                  alt={item.Title}
+                                  width="100%"
+                                />
+                              </div>
+
                               <div className={styles.titleDateContainer}>
                                 <div className={styles.filmstripView_datetime}>
                                   {moment(item.date).format("DD MMMM YYYY")}
