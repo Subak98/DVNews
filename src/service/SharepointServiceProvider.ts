@@ -33,6 +33,38 @@ export default class SharepointServiceProvider implements IServiceProvider {
     this._webAbsoluteUrl = _context.pageContext.web.absoluteUrl;
     this.sp = getSP(_context as WebPartContext);
   }
+  public async getNewsletterFolders(
+    sites: IPropertyFieldSite[],
+  ): Promise<string[]> {
+    const siteUrl = sites?.[0]?.url;
+    if (!siteUrl) return [];
+
+    const response = await this._webPartContext.spHttpClient.get(
+      `${siteUrl.replace(/\/$/, "")}/_api/web/lists/GetByTitle('Past%20Newsletters')/RootFolder/Folders?$select=Name`,
+      SPHttpClient.configurations.v1,
+      {
+        headers: {
+          Accept: "application/json;odata=nometadata",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to load newsletter folders: ${response.statusText}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      value?: Array<{ Name: string }>;
+    };
+    return (data.value || [])
+      .map((folder) => folder.Name)
+      .sort((first, second) =>
+        first.localeCompare(second, undefined, { numeric: true }),
+      );
+  }
+
   public async getDepartmentFieldOptions(
     sites: IPropertyFieldSite[],
   ): Promise<any[]> {
@@ -103,8 +135,14 @@ export default class SharepointServiceProvider implements IServiceProvider {
           FillInChoice: false,
           Group: "My Group",
         });
+        await list.fields.addNumber("Rank", {
+          MinimumValue: 0,
+          MaximumValue: 100,
+          Group: "My Group",
+        });
         await list.defaultView.fields.add("ExpiryDate");
         await list.defaultView.fields.add("Status");
+        await list.defaultView.fields.add("Rank");
         return true;
       }
     } catch (error) {
@@ -280,12 +318,13 @@ export default class SharepointServiceProvider implements IServiceProvider {
     const filterNews = `PromotedState eq 2 and (ExpiryDate ge datetime'${today}T23:59:59Z' or ExpiryDate eq null)`;
     const list = subweb.web.lists.getByTitle("Site Pages");
     const siteTitle = await this.sp.web.select("Title")();
-    const getitems = await list.items
-      .filter(filterNews)
+    const rankedItems = await list.items
+      .filter(`${filterNews} and Rank ne null`)
       .select(
         "*",
         "Title",
         "Department",
+        "Rank",
 
         "Modified",
         "BannerImageUrl",
@@ -297,15 +336,37 @@ export default class SharepointServiceProvider implements IServiceProvider {
         "Author/EMail",
       )
       .expand("Author")
+      .orderBy("Rank", true)
+      // .orderBy("Modified", false)
+      .skip(skip)
+      .top(top)();
+    const UnrankedItems = await list.items
+      .filter(`${filterNews} and Rank eq null`)
+      .select(
+        "*",
+        "Title",
+        "Department",
+        "Rank",
+
+        "Modified",
+        "BannerImageUrl",
+        "Description",
+        "FileRef",
+        "FileDirRef",
+        "Author/ID",
+        "Author/Title",
+        "Author/EMail",
+      )
+      .expand("Author")
+      // .orderBy("Rank", true)
       .orderBy("Modified", false)
       .skip(skip)
       .top(top)();
-    console.log(getitems);
+    let combinedItems = [...rankedItems, ...UnrankedItems];
 
     const normalizedSiteTitle = (siteTitle?.Title || "").trim().toLowerCase();
-    console.log(normalizedSiteTitle);
 
-    const filteredItems = getitems.filter((item: any) => {
+    const filteredItems = combinedItems.filter((item: any) => {
       const departmentValues = Array.isArray(item.Department)
         ? item.Department
         : typeof item.Department === "string"
@@ -322,7 +383,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
       );
     });
 
-    console.log(filteredItems);
+    // console.log(filteredItems);
 
     return filteredItems.map((item: any) => {
       const itemSiteUrl = item._originSiteUrl;
@@ -340,11 +401,11 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
       const lst: IFeaturedNewsList = {
         Title: item.Title || item.FileRef?.split("/SitePages/")[1],
-        date: moment(item.Created).format("MMMM DD, yyyy"),
+        date: moment(item.Modified).format("MMMM DD, yyyy"),
         Created: moment(item.Created).format(),
         Author: item.Author,
         Department: item.Department || "",
-        // ShowNewsinHome: item.ShowNewsinHome,
+        Rank: item.Rank || null,
         AuthorByLine: item.Author ? item.Author : "",
         Image:
           customPhoto &&
@@ -370,13 +431,13 @@ export default class SharepointServiceProvider implements IServiceProvider {
     const today = moment().format("YYYY-MM-DD");
     const filterNews = `PromotedState eq 2 and (Department eq 'All') and (ExpiryDate ge datetime'${today}T23:59:59Z' or ExpiryDate eq null)`;
     const list = subweb.web.lists.getByTitle("Site Pages");
-    const getitems = await list.items
-      .filter(filterNews)
+    const rankedItems = await list.items
+      .filter(`${filterNews} and Rank ne null`)
       .select(
         "*",
         "Title",
         "Department",
-
+        "Rank",
         "Modified",
         "BannerImageUrl",
         "Description",
@@ -387,11 +448,36 @@ export default class SharepointServiceProvider implements IServiceProvider {
         "Author/EMail",
       )
       .expand("Author")
+      .orderBy("Rank", true)
+
+      // .orderBy("Modified", false)
+      .skip(skip)
+      .top(top)();
+    const UnrankedItems = await list.items
+      .filter(`${filterNews} and Rank eq null`)
+      .select(
+        "*",
+        "Title",
+        "Department",
+        "Rank",
+        "Modified",
+        "BannerImageUrl",
+        "Description",
+        "FileRef",
+        "FileDirRef",
+        "Author/ID",
+        "Author/Title",
+        "Author/EMail",
+      )
+      .expand("Author")
+
       .orderBy("Modified", false)
       .skip(skip)
       .top(top)();
+    let combinedItems = [...rankedItems, ...UnrankedItems];
+    // console.log(combinedItems);
 
-    return getitems.map((item: any) => {
+    return combinedItems.map((item: any) => {
       const itemSiteUrl = item._originSiteUrl;
       const imageJSON = item.Image && JSON.parse(item.Image);
       const relativeImage = imageJSON?.serverRelativeUrl;
@@ -407,11 +493,11 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
       const lst: IFeaturedNewsList = {
         Title: item.Title || item.FileRef?.split("/SitePages/")[1],
-        date: moment(item.Created).format("MMMM DD, yyyy"),
+        date: moment(item.Modified).format("MMMM DD, yyyy"),
         Created: moment(item.Created).format(),
         Author: item.Author,
         Department: item.Department || "",
-        // ShowNewsinHome: item.ShowNewsinHome,
+        Rank: item.Rank || null,
         AuthorByLine: item.Author ? item.Author : "",
         Image:
           customPhoto &&
@@ -432,7 +518,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
     sites: IPropertyFieldSite[],
     sitetitle: string,
   ): Promise<any> {
-    console.log(data);
+    // console.log(data);
     const siteUrl = `${sites[0].url}`;
     const subweb = spfi(siteUrl).using(SPFx(this._webPartContext));
     const list = subweb.web.lists.getByTitle("Site Pages");
@@ -453,7 +539,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
       .items.orderBy("ID", false)
       .select("Id", "Title", "FileRef")
       .top(1)();
-    console.log(items);
+    // console.log(items);
 
     // const item = await subweb.web
     //   .getFileByServerRelativePath(
@@ -468,7 +554,7 @@ export default class SharepointServiceProvider implements IServiceProvider {
       Status: "Active",
       // ShowNewsinHome: data.showInHome,
     });
-    console.log(data.departments);
+    // console.log(data.departments);
     if (
       data.departments.length > 0 &&
       data.departments.includes("All") === false
@@ -501,9 +587,9 @@ export default class SharepointServiceProvider implements IServiceProvider {
 
       // we can use this 'list' variable to run more queries on the list:
       const sitePagesListID = await sitePagelist.select("Id")();
-      console.log(groups);
+      // console.log(groups);
 
-      console.log(data.departments);
+      // console.log(data.departments);
 
       for (const departmentName of data.departments) {
         const groupID: any = groups.find(

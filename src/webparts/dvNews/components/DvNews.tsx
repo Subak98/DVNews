@@ -13,6 +13,7 @@ import { Dropdown } from "@fluentui/react/lib/Dropdown";
 import {
   Checkbox,
   DatePicker,
+  Icon,
   Spinner,
   SpinnerSize,
   TextField,
@@ -22,6 +23,9 @@ import "@pnp/graph/groups";
 import "@pnp/graph/members";
 const DvNews: React.FC<IDvNewsProps> = (props) => {
   const [newsItems, setNewsItems] = React.useState<any[]>([]);
+  const [newsletterFolders, setNewsletterFolders] = React.useState<string[]>(
+    [],
+  );
   const [deptOptions, setDeptOptions] = React.useState<any[]>([]);
   const [redirecturl, setRedirectUrl] = React.useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
@@ -57,7 +61,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
           firstBatchSize,
           0,
         );
-        console.log("First batch:", firstBatch);
+        // console.log("First batch:", firstBatch);
         setNewsItems(firstBatch);
 
         setIsLoadingMoreNews(true);
@@ -67,7 +71,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
             200,
             firstBatchSize,
           );
-          console.log("Remaining batch:", remainingNews);
+          // console.log("Remaining batch:", remainingNews);
           if (remainingNews.length > 0) {
             setNewsItems((prev) => [
               ...prev,
@@ -94,7 +98,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
     const noDepartmentFetch = await props.provider
       .getNewsPostWithNoDepartment(props.searchSites, 200, 0)
       .then((res) => {
-        console.log(res);
+        // console.log(res);
         setNewsItems(res);
       })
       .catch((err) => {
@@ -142,6 +146,20 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
       console.error("Error fetching departments:", error);
     });
   }, []);
+  React.useEffect(() => {
+    if (!props.searchSites?.length) {
+      setNewsletterFolders([]);
+      return;
+    }
+
+    props.provider
+      .getNewsletterFolders(props.searchSites)
+      .then(setNewsletterFolders)
+      .catch((error) => {
+        console.error("Error fetching newsletter folders:", error);
+        setNewsletterFolders([]);
+      });
+  }, [props.provider, props.searchSites]);
   // const fetchGroups = async () => {
   //   const graph = graphfi().using(graphSPFx(props.context));
   //   const groups = await graph.groups();
@@ -234,7 +252,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
       await props.provider
         .createNewsPost(createData, props.searchSites, props.sitetitle)
         .then((res: any) => {
-          console.log(res);
+          // console.log(res);
           setRedirectUrl(res);
           setCreatedItemSuccess(true);
           setIsCreatingItem(false);
@@ -273,6 +291,24 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
 
     const parsedDate = moment(value);
     return parsedDate.isValid() ? parsedDate.format("DD MMMM YYYY") : "N/A";
+  };
+
+  const getNewsletterFolderUrl = (folderName?: string) => {
+    const siteUrl = props.searchSites?.[0]?.url;
+    if (!siteUrl) return "#";
+
+    const site = new URL(siteUrl);
+    const sitePath = decodeURIComponent(site.pathname.replace(/\/$/, ""));
+    const libraryPath = `${sitePath}/Past Newsletters`;
+    const folderPath = folderName
+      ? `${libraryPath}/${folderName}`
+      : libraryPath;
+    const folderUrl = new URL(
+      `${libraryPath}/Forms/AllItems.aspx`,
+      site.origin,
+    );
+    folderUrl.searchParams.set("id", folderPath);
+    return folderUrl.toString();
   };
 
   const getDetailValue = (value: any) => {
@@ -332,6 +368,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
         : [...prev, optionKey];
     });
   };
+  console.log(newsletterFolders);
 
   return (
     <>
@@ -633,21 +670,19 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                 >
                   {newsItems.length > 0 &&
                     newsItems.map((item: any, index: number) => {
-                      const image = item.Link.includes("Pillars/SitePages")
-                        ? `${
-                            props.context.pageContext.site.absoluteUrl
-                          }/_layouts/15/userphoto.aspx?size=L&username=${encodeURIComponent(
-                            item.AuthorByLine && item.AuthorByLine.EMail
-                              ? item.AuthorByLine.EMail
-                              : "",
-                          )}`
-                        : item.Image;
+                      const image =
+                        item.Image && item.Image.includes(".pdf")
+                          ? require("../assets/Pdfimg.png")
+                          : item.Image;
 
                       return (
                         <SwiperSlide key={index}>
                           <div className={styles.filmstripView_Container}>
                             <div>
-                              <div style={{ height: "150px" }}>
+                              <div
+                                className={styles.rankedImage}
+                                style={{ height: "150px" }}
+                              >
                                 {" "}
                                 <img
                                   src={image}
@@ -655,6 +690,14 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                                   alt={item.Title}
                                   width="100%"
                                 />
+                                {item.Rank !== null &&
+                                  item.Rank !== undefined && (
+                                    <Icon
+                                      iconName="Pin"
+                                      className={styles.rankPin}
+                                      aria-label="Ranked news"
+                                    />
+                                  )}
                               </div>
 
                               <div className={styles.titleDateContainer}>
@@ -664,7 +707,7 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                                 <button
                                   type="button"
                                   className={styles.filmstripView_titleButton}
-                                  onClick={() => openNewsDetails(item)}
+                                  // onClick={() => openNewsDetails(item)}
                                 >
                                   {item.Title}
                                 </button>
@@ -710,6 +753,37 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
                   </div>
                 )}
               </>
+            )}
+            {props.searchSites?.[0]?.url && (
+              <nav
+                className={styles.newsletterNavigation}
+                aria-label="Past Newsletters"
+              >
+                <span className={styles.newsletterHeading}>
+                  Past Newsletters
+                </span>
+                {newsletterFolders
+                  .filter((folderName) => folderName !== "Forms")
+                  .sort((a, b) => {
+                    const yearA = parseInt(a);
+                    const yearB = parseInt(b);
+
+                    return yearB - yearA;
+                  })
+                  .map((folderName) => (
+                    <React.Fragment key={folderName}>
+                      <span aria-hidden="true">/</span>
+                      <a
+                        href={getNewsletterFolderUrl(folderName)}
+                        data-interception="off"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {folderName}
+                      </a>
+                    </React.Fragment>
+                  ))}
+              </nav>
             )}
           </div>
         </div>

@@ -13,6 +13,7 @@ export interface IServiceProvider {
     skip?: number,
   ): Promise<IList[]>;
   getDepartmentFieldOptions(sites: IPropertyFieldSite[]): Promise<any[]>;
+  getNewsletterFolders(sites: IPropertyFieldSite[]): Promise<string[]>;
   createNewsPost(
     data: any,
     sites: IPropertyFieldSite[],

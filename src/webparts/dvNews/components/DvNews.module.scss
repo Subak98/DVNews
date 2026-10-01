@@ -3,9 +3,10 @@
 .featuredNews {
   width: 100%;
   font-size: 16px;
-      box-shadow: 2px 2px 8.3px 5px rgba(0, 0, 0, .09);
-    padding: 20px;
-    border-radius: 10px;
+  box-shadow: 2px 2px 8.3px 5px rgba(0, 0, 0, 0.09);
+  padding: 20px;
+  border-radius: 10px;
+  background: white;
 }
 .addForm {
   align-items: center;
@@ -42,6 +43,7 @@
   font-size: 20px;
   font-weight: 700;
   margin: 0;
+  color: black;
 }
 .contentBox__heading {
   display: flex;
@@ -50,9 +52,36 @@
   align-items: center;
   gap: 10px;
   position: relative;
-  z-index: 20;
+  // z-index: 20;
   margin-bottom: 5px;
   padding: 5px;
+}
+.newsletterNavigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+
+  a {
+    color: #0067a0;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  span {
+    color: #605e5c;
+  }
+}
+.newsletterHeading {
+  color: #242424;
+  font-size: 16px;
+  font-weight: 700;
+  margin-right: 4px;
 }
 .modalOverlay {
   position: fixed;
@@ -395,10 +424,26 @@
   margin-bottom: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
+  .rankedImage {
+    position: relative;
+  }
+
+  .rankPin {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 50%;
+    padding: 6px;
+    font-size: 14px;
+  }
+
   img {
     // height: 160px;
     // width: 100%;
-    object-fit: cover;
+    object-fit: contain;
     background-color: "[theme: themeTertiary]";
     min-height: 100%;
     min-width: 100%;
@@ -424,15 +469,15 @@
       border: none;
       padding: 0;
       text-align: left;
-      cursor: pointer;
+      // cursor: pointer;
       width: 100%;
       font: inherit;
     }
 
-    .filmstripView_titleButton:hover {
-      color: "[theme: themePrimary]";
-      text-decoration: underline;
-    }
+    // .filmstripView_titleButton:hover {
+    //   color: "[theme: themePrimary]";
+    //   text-decoration: underline;
+    // }
     .filmstripView_datetime {
       font-size: 14px;
       color: "[theme: themePrimary]";
