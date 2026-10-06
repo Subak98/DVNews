@@ -368,7 +368,6 @@ const DvNews: React.FC<IDvNewsProps> = (props) => {
         : [...prev, optionKey];
     });
   };
-  console.log(newsletterFolders);
 
   return (
     <>
