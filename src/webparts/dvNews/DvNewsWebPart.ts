@@ -5,6 +5,7 @@ import {
   type IPropertyPaneConfiguration,
   IPropertyPaneCustomFieldProps,
   IPropertyPaneField,
+  PropertyPaneButton,
   PropertyPaneDropdown,
   PropertyPaneFieldType,
   PropertyPaneLink,
@@ -149,11 +150,18 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
       this.properties.searchSites.length > 0
     ) {
       return [
-        PropertyPaneLink("", {
-          target: "_blank",
-          href: `${this.properties.searchSites[0].url}/SitePages/Forms/ByAuthor.aspx`,
+        PropertyPaneButton("openPeopleDirectory", {
           text: "Edit News Articles",
+          onClick: () => {
+            const url = `${this.properties.searchSites[0].url}/SitePages/Forms/ByAuthor.aspx`;
+            window.open(url, "_blank");
+          },
         }),
+        // PropertyPaneLink("", {
+        //   target: "_blank",
+        //   href: `${this.properties.searchSites[0].url}/SitePages/Forms/ByAuthor.aspx`,
+        //   text: "Edit News Articles",
+        // }),
       ];
     } else {
       return [];
@@ -320,11 +328,12 @@ export default class DvNewsWebPart extends BaseClientSideWebPart<IDvNewsWebPartP
       pages: [
         {
           header: {
-            description: strings.PropertyPaneDescription,
+            description:
+              "isplays news articles and company updates from selected SharePoint sites.",
           },
           groups: [
             {
-              groupName: strings.BasicGroupName,
+              // groupName: strings.BasicGroupName,
               groupFields: [
                 PropertyPaneTextField("title", {
                   label: "Web Part Title",
